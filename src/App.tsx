@@ -3,6 +3,8 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import { AppBar, Box, Card, CardContent, CardHeader, Toolbar, Typography } from '@mui/material'
+import LastScans from './components/LastScans'
+import Scanner from './components/Scanner'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -57,9 +59,8 @@ function App() {
             </CardContent>
           </Card>
 
-          <Card>
-            Hello
-          </Card>
+          <Scanner />
+          <LastScans previousScans={["Hello", "World"]}/>
         </Box>
       </Box>
 
