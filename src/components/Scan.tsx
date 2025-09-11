@@ -34,15 +34,11 @@ let sx = 0;
 let sy = 0;
 
 const crossHairSvg = "M77.125 148.02567c0-3.5774 2.73862-6.27567 6.37076-6.27567H119V117H84.0192C66.50812 117 52 130.77595 52 148.02567V183h25.125v-34.97433zM237.37338 117H202v24.75h35.18494c3.63161 0 6.69006 2.69775 6.69006 6.27567V183H269v-34.97433C269 130.77595 254.88446 117 237.37338 117zM243.875 285.4587c0 3.5774-2.73863 6.27567-6.37076 6.27567H202V317h35.50424C255.01532 317 269 302.70842 269 285.4587V251h-25.125v34.4587zM83.49576 291.73438c-3.63213 0-6.37076-2.69776-6.37076-6.27568V251H52v34.4587C52 302.70842 66.50812 317 84.0192 317H119v-25.26563H83.49576z";
-const crossHairWidth = 217, crossHairHeight = 200, x0 = 53, y0 = 117;
 
 export default function Scan({
-  beep = true,
   decode = true,
   worker = WorkerType.WASM,
   scanRate = 250,
-  bw = false,
-  crosshair = true,
   onChange = (_stringValue: string) => { },
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,14 +47,10 @@ export default function Scan({
   const [btnText, setBtnText] = useState(BTN_TXT.START);
   const [scanning, setScanning] = useState(false);
 
-  const [bwOn, setBwOn, bwRef] = useState(bw);
-  const [crosshairOn, setCrosshairOn, crosshairRef] = useState(crosshair);
-
   const [resultOpen, setResultOpen] = useState(false);
   const [transformToggle, setTransformToggle] = useState(true);
   const [rawCode, setRawCode] = useState<string | null>();
   const [codeType, setCodeType] = useState<CodeType>();
-  const [beepOn, setBeepOn] = useState(beep);
 
   const [video] = useState(document.createElement("video"));
   const [barcode, setBarcode] = useState<string | null>();
@@ -111,7 +103,7 @@ export default function Scan({
         setRawCode(rawCode);
         setCodeType(codeType);
         setMilliseconds(millis);
-        if (beepOn) beepNow();
+        beepNow();
       }
     };
   };
@@ -159,26 +151,11 @@ export default function Scan({
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas?.drawImage(video, sx, sy, sw, sh, dx, dy, dw, dh);
 
-      if (bwRef.current) monochromize();
-      if (crosshairRef.current) drawCrosshair();
+      drawCrosshair();
       if (scanning) requestAnimationFrame(tick);
       if (decode) recogniseQRcode(time);
     }
     requestAnimationFrame(tick);
-  };
-
-  const monochromize = () => {
-    if (canvas && canvasElement) {
-      const imgd = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-      const pix = imgd.data;
-      for (let i = 0; i < pix.length; i += 4) {
-        const gray = pix[i] * 0.3 + pix[i + 1] * 0.59 + pix[i + 2] * 0.11;
-        pix[i] = gray;
-        pix[i + 1] = gray;
-        pix[i + 2] = gray;
-      }
-      canvas.putImageData(imgd, 0, 0);
-    }
   };
 
   const drawCrosshair = () => {
@@ -192,11 +169,7 @@ export default function Scan({
   const recogniseQRcode: FrameRequestCallback = (time) => {
     if (canvas && canvasElement && qrworker && (time - oldTime) > scanRate) {
       oldTime = time;
-      let imageData;
-      if (crosshairRef.current === true)
-        imageData = canvas.getImageData(x0, y0, crossHairWidth, crossHairHeight);
-      else
-        imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
 
       qrworker.postMessage({ imageData: imageData.data, width: imageData.width, height: imageData.height });
       // qrworker.postMessage(imageData, [imageData.data.buffer]);
@@ -208,40 +181,10 @@ export default function Scan({
     if (scanning) await stopScan(); else await startScan();
   };
 
-  const onCrossHairClickHandler: React.MouseEventHandler = async (e) => {
-    e.preventDefault();
-    setCrosshairOn(!crosshairOn);
-  };
-
-  const onBWClickHandler: React.MouseEventHandler = async (e) => {
-    e.preventDefault();
-    setBwOn(!bwOn);
-  };
-
-  const onBeepClickHandler: React.MouseEventHandler = async (e) => {
-    e.preventDefault();
-    setBeepOn(!beepOn);
-  };
-
   const startStyle = (): React.CSSProperties => {
     const style: React.CSSProperties = { width: 80, textAlign: "center" };
     if (scanning) return { backgroundColor: "red", ...style };
     else return { backgroundColor: "", ...style };
-  };
-
-  const xHairStyle = () => {
-    if (crosshairOn) return { backgroundColor: "green" };
-    else return { backgroundColor: "" };
-  };
-
-  const bwStyle = () => {
-    if (bwOn) return { backgroundColor: "green" };
-    else return { backgroundColor: "" };
-  };
-
-  const beepStyle = () => {
-    if (beepOn) return { backgroundColor: "green" };
-    else return { backgroundColor: "" };
   };
 
   const transformToggleStyle = () => {
