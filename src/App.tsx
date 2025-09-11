@@ -7,7 +7,8 @@ import LastScans from './components/LastScans'
 import Scanner from './components/Scanner'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [niss, setNiss] = useState("");
+  const [previousScans, setPreviousScans] = useState<string[]>([]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -59,8 +60,8 @@ function App() {
             </CardContent>
           </Card>
 
-          <Scanner />
-          <LastScans previousScans={["Hello", "World"]}/>
+          <Scanner onChange={(value) => { console.log("onChange", value); setPreviousScans([value, ...previousScans].slice(0, 10)) }} />
+          <LastScans previousScans={previousScans} />
         </Box>
       </Box>
 

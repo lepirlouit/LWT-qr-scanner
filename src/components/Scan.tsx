@@ -1,10 +1,13 @@
 // src: https://github.com/maslick/koder/blob/master/public/wasmWorker.js
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import useState from 'react-usestateref';
-import { beep as beepNow, WorkerType } from "@/helpers";
+import { beep as beepNow } from "@/helpers/audioHelper";
 import { CodeType } from "@/transformers/base";
 import "@/assets/css/scan.css";
+import WorkerType from "@/types/WorkerType";
+import DataMatrixTransformer from "@/transformers/DataMatrixTransformer";
+import Code128Transformer from "@/transformers/Code128Transformer";
 
 const BTN_TXT = {
   START: "START",
@@ -40,8 +43,9 @@ export default function Scan({
   scanRate = 250,
   bw = false,
   crosshair = true,
-  setNissValue = (_stringValue: string) => { },
+  onChange = (_stringValue: string) => { },
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Component state
   const [btnText, setBtnText] = useState(BTN_TXT.START);
@@ -86,33 +90,22 @@ export default function Scan({
         // eslint-disable-next-line prefer-const
         let codeType = CodeType.RAW;
 
-        // // TODO : Transform niss only 1D BarCode (ean)
-        // if (upnqr) {
-        //   const transformer = new Upnqr();
-        //   if (transformer.identified(res)) {
-        //     codeType = transformer.codeType();
-        //     res = await transformer.transform(res);
-        //   }
-        // }
+        // Transform raw 1D BarCode (Code128)
+        const code128Transformer = new Code128Transformer();
+        if (code128Transformer.identified(res)) {
+          codeType = code128Transformer.codeType();
+          res = await code128Transformer.transform(res);
+        }
 
-        // // TODO : Transform raw 1D BarCode (ean)
-        // if (upnqr) {
-        //   const transformer = new Upnqr();
-        //   if (transformer.identified(res)) {
-        //     codeType = transformer.codeType();
-        //     res = await transformer.transform(res);
-        //   }
-        // }
 
-        // // TODO : Transform raw 2D BarCode (qrcode)
-        // if (covid19) {
-        //   const transformer = new Covid19();
-        //   if (transformer.identified(res)) {
-        //     codeType = transformer.codeType();
-        //     res = await transformer.transform(res);
-        //   }
-        // }
-        setNissValue(res);
+        // Transform raw 2D BarCode (DataMatrix)
+        const dataMatrixTransformer = new DataMatrixTransformer();
+        if (dataMatrixTransformer.identified(res)) {
+          codeType = dataMatrixTransformer.codeType();
+          res = await dataMatrixTransformer.transform(res);
+        }
+
+        onChange(res);
         setBarcode(res);
         setResultOpen(true);
         setRawCode(rawCode);
@@ -124,8 +117,9 @@ export default function Scan({
   };
 
   const startScan = async () => {
+    console.log("Start Scan")
     initWorker();
-    canvasElement = document.getElementById("canvas") as HTMLCanvasElement;
+    canvasElement = canvasRef.current!;
     canvas = canvasElement.getContext("2d", { willReadFrequently: true });
 
     setBtnText(BTN_TXT.STOP);
@@ -151,6 +145,7 @@ export default function Scan({
   };
 
   const stopScan = async () => {
+    console.log("Stop Scanning")
     setScanning(false);
     setBtnText(BTN_TXT.START);
     await video.pause();
@@ -229,7 +224,7 @@ export default function Scan({
   };
 
   const startStyle = (): React.CSSProperties => {
-    const style: React.CSSProperties = { width: 64, textAlign: "center" };
+    const style: React.CSSProperties = { width: 80, textAlign: "center" };
     if (scanning) return { backgroundColor: "red", ...style };
     else return { backgroundColor: "", ...style };
   };
@@ -257,15 +252,12 @@ export default function Scan({
   useEffect(() => { }, []);
 
   const renderCanvas = () => {
-    return <canvas id="canvas" className="scanCanvas" width={CANVAS_SIZE.WIDTH} height={CANVAS_SIZE.HEIGHT} />
+    return <canvas id="canvas" className="scanCanvas" ref={canvasRef} width={CANVAS_SIZE.WIDTH} height={CANVAS_SIZE.HEIGHT} />
   };
 
   const renderButtons = () => {
     return <div className="scanBtn">
       <a href="!#" className="myHref" onClick={onBtnClickHandler} style={startStyle()}>{btnText}</a>
-      <a href="!#" className="myHref" onClick={onCrossHairClickHandler} style={xHairStyle()}>X-hair</a>
-      <a href="!#" className="myHref" onClick={onBWClickHandler} style={bwStyle()}>B/W</a>
-      <a href="!#" className="myHref" onClick={onBeepClickHandler} style={beepStyle()}>Beep</a>
     </div>;
   };
 
@@ -308,25 +300,6 @@ export default function Scan({
     );
   };
 
-  const onClickCopyToClipboard: React.MouseEventHandler = async (e) => {
-    e.preventDefault();
-    barcode && await navigator.clipboard.writeText(barcode);
-    const btnId = document.getElementById("copyToClip");
-    if (btnId) {
-      btnId.innerText = "DONE";
-      btnId.style.backgroundColor = "green";
-      setTimeout(() => {
-        btnId.innerText = "COPY";
-        btnId.style.backgroundColor = "";
-      }, 1000);
-    }
-  }
-
-  const renderCopyToClipboardBtn = () => {
-    return <a href="!#" style={{ padding: 12 }} id="copyToClip" className="myHref"
-      onClick={onClickCopyToClipboard}>COPY</a>
-  }
-
   const renderResult = () => {
     if (resultOpen) {
       return (
@@ -340,7 +313,6 @@ export default function Scan({
           <div style={{ marginTop: 40 }}>
             <a href="!#" style={{ padding: 12 }} className="myHref" onClick={onClickBackHandler}>BACK</a>
             {renderTransformToggle()}
-            {renderCopyToClipboardBtn()}
           </div>
         </div>);
     }

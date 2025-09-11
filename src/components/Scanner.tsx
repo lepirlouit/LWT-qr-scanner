@@ -1,11 +1,11 @@
 import { Card } from "@mui/material";
 import Scan from "./Scan"
 
-const Scanner = () => {
+const Scanner = ({ onChange = (_stringValue: string) => { } }) => {
 
   return (
     <Card>
-      <Scan scanRate={250} />
+      <Scan scanRate={250} onChange={onChange} />
     </Card>
   );
 }

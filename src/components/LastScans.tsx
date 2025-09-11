@@ -9,7 +9,7 @@ const LastScans = ({ previousScans = [] }: LastScansProps) => {
   return (
     <Card>
       <CardHeader title={"Last Scans"} />
-      {previousScans.map(previousScan => <Typography>{previousScan}</Typography>)}
+      {previousScans.map((previousScan, index) => <Typography key={`${index}${previousScan}`}>{previousScan}</Typography>)}
     </Card>
   )
 }
