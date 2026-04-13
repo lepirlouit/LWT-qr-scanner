@@ -20,14 +20,14 @@ export function validateBelgianNationalNumber(input: string): ValidationResult {
 
   // Check if input is empty
   if (!cleaned) {
-    return { isValid: false, error: "National register number is required" }
+    return { isValid: false, error: "Rijksregisternummer is verplicht" }
   }
 
   // Must be exactly 11 digits
   if (!/^\d{11}$/.test(cleaned)) {
     return {
       isValid: false,
-      error: "Must be exactly 11 digits (format: YYMMDDXXXCC)",
+      error: "Moet exact 11 cijfers bevatten (formaat: JJMMDDXXXCC)",
     }
   }
 
@@ -44,17 +44,17 @@ export function validateBelgianNationalNumber(input: string): ValidationResult {
   const day = Number.parseInt(dayPart)
 
   if (month < 1 || month > 12) {
-    return { isValid: false, error: "Invalid month (must be 01-12)" }
+    return { isValid: false, error: "Ongeldige maand (moet 01-12 zijn)" }
   }
 
   if (day < 1 || day > 31) {
-    return { isValid: false, error: "Invalid day (must be 01-31)" }
+    return { isValid: false, error: "Ongeldige dag (moet 01-31 zijn)" }
   }
 
   // Validate day for specific months
   const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   if (day > daysInMonth[month - 1]) {
-    return { isValid: false, error: `Invalid day for month ${month.toString().padStart(2, "0")}` }
+    return { isValid: false, error: `Ongeldige dag voor maand ${month.toString().padStart(2, "0")}` }
   }
 
   // Calculate check digits for both centuries
@@ -78,7 +78,7 @@ export function validateBelgianNationalNumber(input: string): ValidationResult {
   if (!isValid1900 && !isValid2000) {
     return {
       isValid: false,
-      error: "Invalid check digits - number does not match Belgian format",
+      error: "Ongeldige controlegecijfers — nummer voldoet niet aan het Belgisch formaat",
     }
   }
 

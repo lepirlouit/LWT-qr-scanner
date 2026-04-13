@@ -24,13 +24,15 @@ const ROWS: (Team | null)[][] = [
 
 interface Props {
   niss: string;
+  warning?: string | null;
   onSelect: (team: Team) => void;
   onCancel: () => void;
 }
 
-export default function TeamSelect({ niss, onSelect, onCancel }: Props) {
+export default function TeamSelect({ niss, warning, onSelect, onCancel }: Props) {
   return (
     <div className="resultModal">
+      {warning && <div className="invalid-message">{warning}</div>}
       <div className="result">{niss}</div>
       <div className="numpad">
         {ROWS.map((row, rowIdx) => (

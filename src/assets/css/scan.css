@@ -83,6 +83,24 @@
   font-size: 15px;
 }
 
+/* Invalid NISS notification */
+.invalid-message {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #c0392b;
+  color: white;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  text-align: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Manual NISS entry */
 .manual-entry {
   display: flex;

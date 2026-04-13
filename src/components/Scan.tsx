@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { beep as beepNow } from "@/helpers/audioHelper";
+import { validateBelgianNationalNumber } from "@/helpers/belgian-validator";
 import "@/assets/css/scan.css";
 import DataMatrixTransformer from "@/transformers/DataMatrixTransformer";
 import Code128Transformer from "@/transformers/Code128Transformer";
@@ -45,6 +46,7 @@ export default function Scan({
   const [resultOpen, setResultOpen] = useState(false);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [manualNiss, setManualNiss] = useState("");
+  const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [validating, setValidating] = useState(false);
@@ -66,6 +68,7 @@ export default function Scan({
       setTeamSelectOpen(false);
       setResultOpen(false);
       setSelectedTeam(null);
+      setInvalidMessage(null);
       setValidating(false);
       setValidationError(null);
 
@@ -94,6 +97,9 @@ export default function Scan({
 
             const dataMatrix = new DataMatrixTransformer();
             if (dataMatrix.identified(res)) res = await dataMatrix.transform(res);
+
+            const validation = validateBelgianNationalNumber(res);
+            if (!validation.isValid) showInvalid(`Ongeldige NISS: ${validation.error}`);
 
             setNiss(res);
             setBarcode(res);
@@ -133,10 +139,14 @@ export default function Scan({
 
   const handleTeamCancel = () => startScan();
 
+  const showInvalid = (msg: string) => setInvalidMessage(msg);
+
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = manualNiss.trim();
     if (!value) return;
+    const validation = validateBelgianNationalNumber(value);
+    if (!validation.isValid) showInvalid(`Ongeldige NISS: ${validation.error}`);
     await stopScan();
     setNiss(value);
     setBarcode(value);
@@ -244,7 +254,7 @@ export default function Scan({
         </form>
       </div>
       {teamSelectOpen && barcode && (
-        <TeamSelect niss={barcode} onSelect={handleTeamSelect} onCancel={handleTeamCancel} />
+        <TeamSelect niss={barcode} warning={invalidMessage} onSelect={handleTeamSelect} onCancel={handleTeamCancel} />
       )}
       {renderResult()}
     </div>
