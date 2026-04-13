@@ -23,4 +23,15 @@ export default defineConfig({
       },
     },
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor':  ['react', 'react-dom'],
+          'mui-vendor':    ['@mui/material', '@emotion/react', '@emotion/styled'],
+          'scandit-vendor': ['@scandit/web-datacapture-core', '@scandit/web-datacapture-barcode'],
+        },
+      },
+    },
+  },
 })
