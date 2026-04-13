@@ -4,6 +4,7 @@ import { CodeType } from "@/transformers/base";
 import "@/assets/css/scan.css";
 import DataMatrixTransformer from "@/transformers/DataMatrixTransformer";
 import Code128Transformer from "@/transformers/Code128Transformer";
+import TeamSelect, { type Team } from "@/components/TeamSelect";
 import {
   DataCaptureContext,
   DataCaptureView,
@@ -32,11 +33,13 @@ export default function Scan({
   const viewContainerRef = useRef<HTMLDivElement>(null);
   const [scanning, setScanning] = useState(false);
   const [btnText, setBtnText] = useState(BTN_TXT.START);
+  const [teamSelectOpen, setTeamSelectOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [transformToggle, setTransformToggle] = useState(true);
   const [rawCode, setRawCode] = useState<string | null>(null);
   const [codeType, setCodeType] = useState<CodeType>(CodeType.RAW);
   const [barcode, setBarcode] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
   const contextRef = useRef<DataCaptureContext | null>(null);
   const cameraRef = useRef<Camera | null>(null);
@@ -52,10 +55,12 @@ export default function Scan({
   const startScan = async () => {
     try {
       setBarcode(null);
+      setTeamSelectOpen(false);
       setResultOpen(false);
       setTransformToggle(true);
       setRawCode(null);
       setCodeType(CodeType.RAW);
+      setSelectedTeam(null);
 
       if (!contextRef.current) {
         const context = await DataCaptureContext.forLicenseKey(LICENSE_KEY, {
@@ -91,11 +96,10 @@ export default function Scan({
               res = await dataMatrix.transform(res);
             }
 
-            onChange(res);
             setBarcode(res);
-            setResultOpen(true);
             setRawCode(raw);
             setCodeType(currentCodeType);
+            setTeamSelectOpen(true);
             beepNow();
           },
         });
@@ -123,6 +127,18 @@ export default function Scan({
       await stopScan();
       alert(err);
     }
+  };
+
+  const handleTeamSelect = (team: Team) => {
+    setSelectedTeam(team);
+    setTeamSelectOpen(false);
+    setResultOpen(true);
+    onChange(`${barcode} (${team.name})`);
+  };
+
+  const handleTeamCancel = () => {
+    setTeamSelectOpen(false);
+    setBarcode(null);
   };
 
   const onBtnClick: React.MouseEventHandler = async (e) => {
@@ -174,6 +190,12 @@ export default function Scan({
     if (!resultOpen) return null;
     return (
       <div className="resultModal">
+        {selectedTeam && (
+          <div className="team-badge">
+            <span className="team-badge__num">{selectedTeam.key}</span>
+            <span className="team-badge__name">{selectedTeam.name}</span>
+          </div>
+        )}
         <div className="result">{barcode}</div>
         <div style={{ marginTop: 40 }}>
           <a href="!#" style={{ padding: 12 }} className="myHref" onClick={onClickBack}>BACK</a>
@@ -195,6 +217,9 @@ export default function Scan({
           <a href="!#" className="myHref" onClick={onBtnClick} style={startStyle()}>{btnText}</a>
         </div>
       </div>
+      {teamSelectOpen && barcode && (
+        <TeamSelect niss={barcode} onSelect={handleTeamSelect} onCancel={handleTeamCancel} />
+      )}
       {renderResult()}
     </div>
   );
