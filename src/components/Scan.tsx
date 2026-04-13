@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { beep as beepNow } from "@/helpers/audioHelper";
-import { CodeType } from "@/transformers/base";
 import "@/assets/css/scan.css";
 import DataMatrixTransformer from "@/transformers/DataMatrixTransformer";
 import Code128Transformer from "@/transformers/Code128Transformer";
@@ -44,9 +43,6 @@ export default function Scan({
   const viewContainerRef = useRef<HTMLDivElement>(null);
   const [teamSelectOpen, setTeamSelectOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
-  const [transformToggle, setTransformToggle] = useState(true);
-  const [rawCode, setRawCode] = useState<string | null>(null);
-  const [codeType, setCodeType] = useState<CodeType>(CodeType.RAW);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -68,9 +64,6 @@ export default function Scan({
       setNiss(null);
       setTeamSelectOpen(false);
       setResultOpen(false);
-      setTransformToggle(true);
-      setRawCode(null);
-      setCodeType(CodeType.RAW);
       setSelectedTeam(null);
       setValidating(false);
       setValidationError(null);
@@ -94,25 +87,15 @@ export default function Scan({
             await stopScan();
 
             let res = scanned.data;
-            const raw = res;
-            let currentCodeType = CodeType.RAW;
 
             const code128 = new Code128Transformer();
-            if (code128.identified(res)) {
-              currentCodeType = code128.codeType();
-              res = await code128.transform(res);
-            }
+            if (code128.identified(res)) res = await code128.transform(res);
 
             const dataMatrix = new DataMatrixTransformer();
-            if (dataMatrix.identified(res)) {
-              currentCodeType = dataMatrix.codeType();
-              res = await dataMatrix.transform(res);
-            }
+            if (dataMatrix.identified(res)) res = await dataMatrix.transform(res);
 
             setNiss(res);
             setBarcode(res);
-            setRawCode(raw);
-            setCodeType(currentCodeType);
             setTeamSelectOpen(true);
             beepNow();
           },
@@ -186,27 +169,6 @@ export default function Scan({
     };
   }, []);
 
-  const transformToggleStyle = () => ({
-    backgroundColor: transformToggle ? "green" : "",
-    padding: 12,
-  });
-
-  const onTransformToggle: React.MouseEventHandler = (e) => {
-    e.preventDefault();
-    setTransformToggle(!transformToggle);
-    setBarcode(rawCode);
-    setRawCode(barcode);
-  };
-
-  const renderTransformToggle = () => {
-    if (codeType === CodeType.RAW) return null;
-    return (
-      <a href="!#" className="myHref" style={transformToggleStyle()} onClick={onTransformToggle}>
-        {transformToggle ? codeType : "RAW"}
-      </a>
-    );
-  };
-
   const renderValidateButton = () => (
     <>
       <a
@@ -235,8 +197,14 @@ export default function Scan({
         <div style={{ marginTop: 16 }}>
           {renderValidateButton()}
         </div>
-        <div style={{ marginTop: 16 }}>
-          {renderTransformToggle()}
+        <div style={{ marginTop: 32 }}>
+          <a
+            href="!#"
+            className="myHref back-btn"
+            onClick={(e) => { e.preventDefault(); setResultOpen(false); setTeamSelectOpen(true); }}
+          >
+            ← Ploeg wijzigen
+          </a>
         </div>
       </div>
     );

@@ -83,6 +83,17 @@
   font-size: 15px;
 }
 
+/* Back / secondary button */
+.back-btn {
+  background-color: #555 !important;
+  font-size: 13px;
+  padding: 8px 14px !important;
+}
+
+.back-btn:hover {
+  background-color: #444 !important;
+}
+
 /* Validate button states */
 .validate-ok {
   display: inline-block;
