@@ -44,6 +44,7 @@ export default function Scan({
   const [teamSelectOpen, setTeamSelectOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [barcode, setBarcode] = useState<string | null>(null);
+  const [manualNiss, setManualNiss] = useState("");
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [validating, setValidating] = useState(false);
@@ -132,6 +133,18 @@ export default function Scan({
 
   const handleTeamCancel = () => startScan();
 
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = manualNiss.trim();
+    if (!value) return;
+    await stopScan();
+    setNiss(value);
+    setBarcode(value);
+    setManualNiss("");
+    setTeamSelectOpen(true);
+    beepNow();
+  };
+
   const handleValidate = async () => {
     if (!niss) return;
     setValidating(true);
@@ -218,6 +231,17 @@ export default function Scan({
           className="scanCanvas"
           style={{ width: 320, height: 430, position: "relative" }}
         />
+        <form className="manual-entry" onSubmit={handleManualSubmit}>
+          <input
+            className="manual-input"
+            type="text"
+            inputMode="numeric"
+            placeholder="NISS manueel invoeren"
+            value={manualNiss}
+            onChange={(e) => setManualNiss(e.target.value)}
+          />
+          <button className="manual-submit" type="submit">OK</button>
+        </form>
       </div>
       {teamSelectOpen && barcode && (
         <TeamSelect niss={barcode} onSelect={handleTeamSelect} onCancel={handleTeamCancel} />
