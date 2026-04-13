@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { AppBar, Box, Card, CardContent, CardHeader, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Card, CardHeader, Toolbar, Typography } from '@mui/material'
 import LastScans from './components/LastScans'
 import Scanner from './components/Scanner'
 
@@ -51,10 +51,6 @@ function App() {
         >
           <Card>
             <CardHeader title={"LWT Scanner"} />
-            <CardContent>
-              <Typography>WebAssembly Barcode Scanner</Typography>
-              <p className="text-sm text-muted-foreground">Belgish rijksregisternummer Scanner</p>
-            </CardContent>
           </Card>
 
           <Scanner onChange={(value) => { console.log("onChange", value); setPreviousScans([value, ...previousScans].slice(0, 10)) }} />
