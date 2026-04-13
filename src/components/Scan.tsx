@@ -20,7 +20,7 @@ import {
 } from "@scandit/web-datacapture-barcode";
 
 const LICENSE_KEY = import.meta.env.VITE_SCANDIT_LICENSE_KEY ?? "";
-const LIBRARY_LOCATION = "/scandit-lib/";
+const LIBRARY_LOCATION = new URL('./scandit-lib/', document.baseURI).href;
 const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
 
 const localISOString = () => {
