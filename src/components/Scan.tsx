@@ -22,8 +22,19 @@ import {
 
 const LICENSE_KEY = import.meta.env.VITE_SCANDIT_LICENSE_KEY ?? "";
 const LIBRARY_LOCATION = "/scandit-lib/";
+const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
 
-const BTN_TXT = { START: "START", STOP: "STOP" };
+const localISOString = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 19);
+};
+
+const getGeolocation = (): Promise<GeolocationPosition> =>
+  new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+  );
 
 export default function Scan({
   onChange = (_: string) => {},
@@ -31,23 +42,22 @@ export default function Scan({
   onChange?: (value: string) => void;
 }) {
   const viewContainerRef = useRef<HTMLDivElement>(null);
-  const [scanning, setScanning] = useState(false);
-  const [btnText, setBtnText] = useState(BTN_TXT.START);
   const [teamSelectOpen, setTeamSelectOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [transformToggle, setTransformToggle] = useState(true);
   const [rawCode, setRawCode] = useState<string | null>(null);
   const [codeType, setCodeType] = useState<CodeType>(CodeType.RAW);
   const [barcode, setBarcode] = useState<string | null>(null);
+  const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const contextRef = useRef<DataCaptureContext | null>(null);
   const cameraRef = useRef<Camera | null>(null);
   const barcodeCaptureRef = useRef<BarcodeCapture | null>(null);
 
   const stopScan = async () => {
-    setScanning(false);
-    setBtnText(BTN_TXT.START);
     await barcodeCaptureRef.current?.setEnabled(false);
     await cameraRef.current?.switchToDesiredState(FrameSourceState.Off);
   };
@@ -55,12 +65,15 @@ export default function Scan({
   const startScan = async () => {
     try {
       setBarcode(null);
+      setNiss(null);
       setTeamSelectOpen(false);
       setResultOpen(false);
       setTransformToggle(true);
       setRawCode(null);
       setCodeType(CodeType.RAW);
       setSelectedTeam(null);
+      setValidating(false);
+      setValidationError(null);
 
       if (!contextRef.current) {
         const context = await DataCaptureContext.forLicenseKey(LICENSE_KEY, {
@@ -96,6 +109,7 @@ export default function Scan({
               res = await dataMatrix.transform(res);
             }
 
+            setNiss(res);
             setBarcode(res);
             setRawCode(raw);
             setCodeType(currentCodeType);
@@ -120,11 +134,8 @@ export default function Scan({
 
       await barcodeCaptureRef.current?.setEnabled(true);
       await cameraRef.current?.switchToDesiredState(FrameSourceState.On);
-      setBtnText(BTN_TXT.STOP);
-      setScanning(true);
     } catch (err) {
       console.error(err);
-      await stopScan();
       alert(err);
     }
   };
@@ -133,42 +144,52 @@ export default function Scan({
     setSelectedTeam(team);
     setTeamSelectOpen(false);
     setResultOpen(true);
-    onChange(`${barcode} (${team.name})`);
+    onChange(`${niss} (${team.name})`);
   };
 
-  const handleTeamCancel = () => {
-    setTeamSelectOpen(false);
-    setBarcode(null);
-  };
+  const handleTeamCancel = () => startScan();
 
-  const onBtnClick: React.MouseEventHandler = async (e) => {
-    e.preventDefault();
-    if (scanning) await stopScan();
-    else await startScan();
+  const handleValidate = async () => {
+    if (!niss) return;
+    setValidating(true);
+    setValidationError(null);
+    try {
+      let latitude = 0;
+      let longitude = 0;
+      try {
+        const position = await getGeolocation();
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } catch {
+        // proceed without coordinates
+      }
+
+      const response = await fetch(SCANNING_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude, longitude, niss, moment: localISOString() }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await startScan();
+    } catch (err) {
+      setValidationError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setValidating(false);
+    }
   };
 
   useEffect(() => {
+    startScan();
     return () => {
       cameraRef.current?.switchToDesiredState(FrameSourceState.Off);
       contextRef.current?.dispose();
     };
   }, []);
 
-  const startStyle = (): React.CSSProperties => ({
-    width: 80,
-    textAlign: "center",
-    backgroundColor: scanning ? "red" : "",
-  });
-
   const transformToggleStyle = () => ({
     backgroundColor: transformToggle ? "green" : "",
     padding: 12,
   });
-
-  const onClickBack: React.MouseEventHandler = (e) => {
-    e.preventDefault();
-    setResultOpen(false);
-  };
 
   const onTransformToggle: React.MouseEventHandler = (e) => {
     e.preventDefault();
@@ -186,6 +207,20 @@ export default function Scan({
     );
   };
 
+  const renderValidateButton = () => (
+    <>
+      <a
+        href="!#"
+        className="myHref"
+        style={{ padding: 12, opacity: validating ? 0.6 : 1, pointerEvents: validating ? "none" : "auto" }}
+        onClick={(e) => { e.preventDefault(); handleValidate(); }}
+      >
+        {validating ? "..." : "VALIDEREN"}
+      </a>
+      {validationError && <div className="validate-error">{validationError}</div>}
+    </>
+  );
+
   const renderResult = () => {
     if (!resultOpen) return null;
     return (
@@ -197,8 +232,10 @@ export default function Scan({
           </div>
         )}
         <div className="result">{barcode}</div>
-        <div style={{ marginTop: 40 }}>
-          <a href="!#" style={{ padding: 12 }} className="myHref" onClick={onClickBack}>BACK</a>
+        <div style={{ marginTop: 16 }}>
+          {renderValidateButton()}
+        </div>
+        <div style={{ marginTop: 16 }}>
           {renderTransformToggle()}
         </div>
       </div>
@@ -213,9 +250,6 @@ export default function Scan({
           className="scanCanvas"
           style={{ width: 320, height: 430, position: "relative" }}
         />
-        <div className="scanBtn">
-          <a href="!#" className="myHref" onClick={onBtnClick} style={startStyle()}>{btnText}</a>
-        </div>
       </div>
       {teamSelectOpen && barcode && (
         <TeamSelect niss={barcode} onSelect={handleTeamSelect} onCancel={handleTeamCancel} />

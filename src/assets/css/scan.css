@@ -83,6 +83,25 @@
   font-size: 15px;
 }
 
+/* Validate button states */
+.validate-ok {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background-color: #1b7c3a;
+  color: white;
+  font-family: monospace;
+  font-size: 15px;
+}
+
+.validate-error {
+  margin-top: 8px;
+  color: #c0392b;
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-word;
+}
+
 /* Team selection numpad */
 .numpad {
   display: flex;
