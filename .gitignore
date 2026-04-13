@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Scandit engine files (auto-copied from node_modules on dev/build)
+public/scandit-lib
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +25,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.env

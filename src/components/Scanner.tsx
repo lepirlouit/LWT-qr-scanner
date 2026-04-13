@@ -5,7 +5,7 @@ const Scanner = ({ onChange = (_stringValue: string) => { } }) => {
 
   return (
     <Card>
-      <Scan scanRate={250} onChange={onChange} />
+      <Scan onChange={onChange} />
     </Card>
   );
 }
