@@ -6,11 +6,11 @@ class Code128Transformer implements Transformer {
     return CodeType.NISS;
   }
   identified(raw: string): boolean {
-    return /^(?:\d{11}|\d{20})$/.test(raw) && validateBelgianNationalNumber(raw.replace(/[\s.-]/g, "").substring(11)).isValid;
+    return /^(?:\d{11}|\d{20})$/.test(raw) && validateBelgianNationalNumber(raw.replace(/[\s.-]/g, "").substring(0, 11)).isValid;
 
   }
   async transform(raw: string): Promise<string> {
-    return raw.replace(/[\s.-]/g, "").substring(11);
+    return raw.replace(/[\s.-]/g, "").substring(0, 11);
   }
 
 }
