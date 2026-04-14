@@ -173,7 +173,7 @@ export default function Scan({
       const response = await fetch(SCANNING_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ latitude, longitude, niss, moment: localISOString() }),
+        body: JSON.stringify({ latitude, longitude, niss: niss.substring(0,11), moment: localISOString() }),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       await startScan();
