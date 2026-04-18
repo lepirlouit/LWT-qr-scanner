@@ -1,11 +1,13 @@
 import { Card } from "@mui/material";
 import Scan from "./Scan"
+import type { ScanRecord } from "@/types/ScanRecord";
 
-const Scanner = ({ onChange = (_stringValue: string) => { } }) => {
+type SubmitData = Omit<ScanRecord, 'id' | 'status' | 'latitude' | 'longitude'>;
 
+const Scanner = ({ onSubmit = (_: SubmitData) => {} }: { onSubmit?: (data: SubmitData) => void }) => {
   return (
     <Card>
-      <Scan onChange={onChange} />
+      <Scan onSubmit={onSubmit} />
     </Card>
   );
 }
