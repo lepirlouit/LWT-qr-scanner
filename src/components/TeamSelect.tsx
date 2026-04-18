@@ -2,13 +2,13 @@ import "@/assets/css/scan.css";
 
 export const TEAMS = [
   { key: 1,  name: "A-ploeg"     },
-  { key: 3,  name: "Tempo's"     },
-  { key: 4,  name: "Sportivo's"  },
-  { key: 5,  name: "Cyclo's"     },
+  { key: 3,  name: "Tempo"        },
+  { key: 4,  name: "Sportivo"    },
+  { key: 5,  name: "Cyclo"       },
   { key: 6,  name: "Toeristen"   },
-  { key: 7,  name: "D-Ploeg"     },
+  { key: 7,  name: "D-ploeg"     },
   { key: 9,  name: "Trappers"    },
-  { key: 10, name: "Moderato's"  },
+  { key: 10, name: "Moderato"    },
   { key: 11, name: "Volgwagen"   },
 ] as const;
 

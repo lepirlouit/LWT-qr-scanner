@@ -37,7 +37,7 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             niss: record.niss.substring(0, 11),
-            teamKey: record.teamKey,
+            team: record.teamName,
             moment: record.moment,
             latitude,
             longitude,
