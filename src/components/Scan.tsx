@@ -5,6 +5,7 @@ import "@/assets/css/scan.css";
 import DataMatrixTransformer from "@/transformers/DataMatrixTransformer";
 import Code128Transformer from "@/transformers/Code128Transformer";
 import TeamSelect, { type Team } from "@/components/TeamSelect";
+import type { ScanRecord } from "@/types/ScanRecord";
 import {
   DataCaptureContext,
   DataCaptureView,
@@ -22,7 +23,6 @@ import {
 
 const LICENSE_KEY = import.meta.env.VITE_SCANDIT_LICENSE_KEY ?? "";
 const LIBRARY_LOCATION = new URL('./scandit-lib/', document.baseURI).href;
-const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
 
 const localISOString = () => {
   const now = new Date();
@@ -31,15 +31,12 @@ const localISOString = () => {
     .slice(0, 19);
 };
 
-const getGeolocation = (): Promise<GeolocationPosition> =>
-  new Promise((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
-  );
+type SubmitData = Omit<ScanRecord, 'id' | 'status' | 'latitude' | 'longitude'>;
 
 export default function Scan({
-  onChange = (_: string) => {},
+  onSubmit = (_: SubmitData) => {},
 }: {
-  onChange?: (value: string) => void;
+  onSubmit?: (data: SubmitData) => void;
 }) {
   const viewContainerRef = useRef<HTMLDivElement>(null);
   const [teamSelectOpen, setTeamSelectOpen] = useState(false);
@@ -49,8 +46,6 @@ export default function Scan({
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [validating, setValidating] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
 
   const contextRef = useRef<DataCaptureContext | null>(null);
   const cameraRef = useRef<Camera | null>(null);
@@ -69,8 +64,6 @@ export default function Scan({
       setResultOpen(false);
       setSelectedTeam(null);
       setInvalidMessage(null);
-      setValidating(false);
-      setValidationError(null);
 
       if (!contextRef.current) {
         const context = await DataCaptureContext.forLicenseKey(LICENSE_KEY, {
@@ -134,7 +127,6 @@ export default function Scan({
     setSelectedTeam(team);
     setTeamSelectOpen(false);
     setResultOpen(true);
-    onChange(`${niss} (${team.name})`);
   };
 
   const handleTeamCancel = () => startScan();
@@ -155,33 +147,10 @@ export default function Scan({
     beepNow();
   };
 
-  const handleValidate = async () => {
-    if (!niss) return;
-    setValidating(true);
-    setValidationError(null);
-    try {
-      let latitude = 0;
-      let longitude = 0;
-      try {
-        const position = await getGeolocation();
-        latitude = position.coords.latitude;
-        longitude = position.coords.longitude;
-      } catch {
-        // proceed without coordinates
-      }
-
-      const response = await fetch(SCANNING_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ latitude, longitude, niss: niss.substring(0,11), moment: localISOString() }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      await startScan();
-    } catch (err) {
-      setValidationError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setValidating(false);
-    }
+  const handleValidate = () => {
+    if (!niss || !selectedTeam) return;
+    onSubmit({ niss, teamKey: selectedTeam.key, teamName: selectedTeam.name, moment: localISOString() });
+    startScan();
   };
 
   useEffect(() => {
@@ -193,17 +162,14 @@ export default function Scan({
   }, []);
 
   const renderValidateButton = () => (
-    <>
-      <a
-        href="!#"
-        className="myHref"
-        style={{ padding: 12, opacity: validating ? 0.6 : 1, pointerEvents: validating ? "none" : "auto" }}
-        onClick={(e) => { e.preventDefault(); handleValidate(); }}
-      >
-        {validating ? "..." : "VALIDEREN"}
-      </a>
-      {validationError && <div className="validate-error">{validationError}</div>}
-    </>
+    <a
+      href="!#"
+      className="myHref"
+      style={{ padding: 12 }}
+      onClick={(e) => { e.preventDefault(); handleValidate() }}
+    >
+      VALIDEREN
+    </a>
   );
 
   const renderResult = () => {
