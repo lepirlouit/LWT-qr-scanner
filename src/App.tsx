@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { AppBar, Box, Card, CardHeader, Toolbar, Typography } from '@mui/material'
 import LastScans from './components/LastScans'
@@ -6,6 +6,16 @@ import Scanner from './components/Scanner'
 import type { ScanRecord } from './types/ScanRecord'
 
 const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
+const STORAGE_KEY = 'lwt-scans';
+
+const loadScans = (): ScanRecord[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
 const MAX_RETRIES = 3;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const getGeolocation = (): Promise<GeolocationPosition> =>
@@ -14,7 +24,11 @@ const getGeolocation = (): Promise<GeolocationPosition> =>
   );
 
 function App() {
-  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [scans, setScans] = useState<ScanRecord[]>(loadScans);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scans.filter(s => s.status !== 'success')));
+  }, [scans]);
 
   const updateScan = (id: string, patch: Partial<ScanRecord>) =>
     setScans(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
@@ -55,6 +69,14 @@ function App() {
       }
     }
   };
+
+  // Resubmit records that were pending or failed when the page was last closed
+  useEffect(() => {
+    const toRetry = scans.filter(s => s.status === 'pending' || s.status === 'failed');
+    if (toRetry.length === 0) return;
+    setScans(prev => prev.map(s => toRetry.some(r => r.id === s.id) ? { ...s, status: 'pending' } : s));
+    toRetry.forEach(s => submitWithRetry({ ...s, status: 'pending' }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScanSubmit = (data: Omit<ScanRecord, 'id' | 'status' | 'latitude' | 'longitude'>) => {
     const record: ScanRecord = { ...data, id: crypto.randomUUID(), status: 'pending', latitude: 0, longitude: 0 };
