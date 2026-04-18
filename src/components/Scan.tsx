@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Switch, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { beep as beepNow } from "@/helpers/audioHelper";
 import { validateBelgianNationalNumber } from "@/helpers/belgian-validator";
 import "@/assets/css/scan.css";
@@ -46,6 +48,8 @@ export default function Scan({
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [teamRequired, setTeamRequired] = useState(true);
+  const teamRequiredRef = useRef(true);
 
   const contextRef = useRef<DataCaptureContext | null>(null);
   const cameraRef = useRef<Camera | null>(null);
@@ -96,7 +100,11 @@ export default function Scan({
 
             setNiss(res);
             setBarcode(res);
-            setTeamSelectOpen(true);
+            if (teamRequiredRef.current) {
+              setTeamSelectOpen(true);
+            } else {
+              setResultOpen(true);
+            }
             beepNow();
           },
         });
@@ -143,13 +151,22 @@ export default function Scan({
     setNiss(value);
     setBarcode(value);
     setManualNiss("");
-    setTeamSelectOpen(true);
+    if (teamRequired) {
+      setTeamSelectOpen(true);
+    } else {
+      setResultOpen(true);
+    }
     beepNow();
   };
 
   const handleValidate = () => {
-    if (!niss || !selectedTeam) return;
-    onSubmit({ niss, teamKey: selectedTeam.key, teamName: selectedTeam.name, moment: localISOString() });
+    if (!niss) return;
+    onSubmit({
+      niss,
+      teamKey: selectedTeam?.key,
+      teamName: selectedTeam?.name,
+      moment: localISOString(),
+    });
     startScan();
   };
 
@@ -186,15 +203,17 @@ export default function Scan({
         <div style={{ marginTop: 16 }}>
           {renderValidateButton()}
         </div>
-        <div style={{ marginTop: 32 }}>
-          <a
-            href="!#"
-            className="myHref back-btn"
-            onClick={(e) => { e.preventDefault(); setResultOpen(false); setTeamSelectOpen(true); }}
-          >
-            ← Ploeg wijzigen
-          </a>
-        </div>
+        {teamRequired && (
+          <div style={{ marginTop: 32 }}>
+            <a
+              href="!#"
+              className="myHref back-btn"
+              onClick={(e) => { e.preventDefault(); setResultOpen(false); setTeamSelectOpen(true); }}
+            >
+              ← Ploeg wijzigen
+            </a>
+          </div>
+        )}
       </div>
     );
   };
@@ -207,6 +226,25 @@ export default function Scan({
           className="scanCanvas"
           style={{ width: 320, height: 430, position: "relative" }}
         />
+        <Accordion disableGutters elevation={0} sx={{ background: 'transparent' }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="body2" color="text.secondary">Opties</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={teamRequired}
+                  onChange={(e) => {
+                    teamRequiredRef.current = e.target.checked;
+                    setTeamRequired(e.target.checked);
+                  }}
+                />
+              }
+              label="Ploeg selecteren"
+            />
+          </AccordionDetails>
+        </Accordion>
         <form className="manual-entry" onSubmit={handleManualSubmit}>
           <input
             className="manual-input"

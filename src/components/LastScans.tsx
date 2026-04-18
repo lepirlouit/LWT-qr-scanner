@@ -30,7 +30,7 @@ const LastScans = ({ scans = [], onRetry }: LastScansProps) => {
           >
             <ListItemText
               primary={`${statusIcon(scan.status)} ${scan.niss}`}
-              secondary={`${scan.teamName} — ${scan.moment}`}
+              secondary={`${scan.teamName ?? '—'} — ${scan.moment}`}
             />
           </ListItem>
         ))}
