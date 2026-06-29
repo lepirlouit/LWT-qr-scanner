@@ -61,15 +61,12 @@ export function validateBelgianNationalNumber(input: string): ValidationResult {
   const baseNumber = Number.parseInt(cleaned.substring(0, 9))
 
   // For people born in 1900s
-  let remainder1900 = baseNumber % 97
-  if (remainder1900 === 0) remainder1900 = 97
-  const calculatedCheck1900 = 97 - remainder1900
+  // Check = 97 - (base % 97); when base % 97 === 0 the check digit is 97.
+  const calculatedCheck1900 = 97 - (baseNumber % 97)
 
   // For people born in 2000s (add 2000000000 to base number)
   const baseNumber2000 = baseNumber + 2000000000
-  let remainder2000 = baseNumber2000 % 97
-  if (remainder2000 === 0) remainder2000 = 97
-  const calculatedCheck2000 = 97 - remainder2000
+  const calculatedCheck2000 = 97 - (baseNumber2000 % 97)
 
   const providedCheck = Number.parseInt(checkDigits)
   const isValid1900 = providedCheck === calculatedCheck1900

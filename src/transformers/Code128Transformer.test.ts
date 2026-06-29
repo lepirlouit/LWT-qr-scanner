@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import Code128Transformer from "./Code128Transformer";
 
 // Valid NSSNs used as fixtures
-// 85073001348 — born 1985-07-30, seq 013 (male), 1900s check digits
+// 72031511397 — born 1972-03-15, seq 113 (male), 1900s check digits
 // 00010100105 — born 2000-01-01, seq 001 (male), 2000s check digits
-const NISS_1900 = "85073001348";
+const NISS_1900 = "72031511397";
 const NISS_2000 = "00010100105";
 const INVALID_NISS = "12345678901"; // fails check-digit validation
 
@@ -63,7 +63,7 @@ describe("Code128Transformer.transform", () => {
   });
 
   it("strips spaces, dots and dashes before slicing", async () => {
-    // "85.073.001.348 123456789" → cleaned "85073001348123456789" → first 11 = NISS_1900
-    expect(await transformer.transform("85.073.001.348 123456789")).toBe(NISS_1900);
+    // "72.031.511.397 123456789" → cleaned "72031511397123456789" → first 11 = NISS_1900
+    expect(await transformer.transform("72.031.511.397 123456789")).toBe(NISS_1900);
   });
 });
