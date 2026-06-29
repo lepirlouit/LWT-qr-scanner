@@ -96,7 +96,7 @@ export default function Scan({
             if (dataMatrix.identified(res)) res = await dataMatrix.transform(res);
 
             const validation = validateBelgianNationalNumber(res);
-            if (!validation.isValid) showInvalid(`Ongeldige NISS: ${validation.error}`);
+            if (!validation.isValid) showInvalid(`Ongeldig rijksregisternummer: ${validation.error}`);
 
             setNiss(res);
             setBarcode(res);
@@ -146,7 +146,7 @@ export default function Scan({
     const value = manualNiss.trim();
     if (!value) return;
     const validation = validateBelgianNationalNumber(value);
-    if (!validation.isValid) showInvalid(`Ongeldige NISS: ${validation.error}`);
+    if (!validation.isValid) showInvalid(`Ongeldig rijksregisternummer: ${validation.error}`);
     await stopScan();
     setNiss(value);
     setBarcode(value);
@@ -250,7 +250,7 @@ export default function Scan({
             className="manual-input"
             type="text"
             inputMode="numeric"
-            placeholder="NISS manueel invoeren"
+            placeholder="Rijksreg.nr manueel invoeren"
             value={manualNiss}
             onChange={(e) => setManualNiss(e.target.value)}
           />

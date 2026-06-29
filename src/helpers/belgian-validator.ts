@@ -75,7 +75,7 @@ export function validateBelgianNationalNumber(input: string): ValidationResult {
   if (!isValid1900 && !isValid2000) {
     return {
       isValid: false,
-      error: "Ongeldige controlegecijfers — nummer voldoet niet aan het Belgisch formaat",
+      error: "Ongeldige controlecijfers — nummer voldoet niet aan het Belgisch formaat",
     }
   }
 
