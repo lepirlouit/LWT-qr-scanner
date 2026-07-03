@@ -4,10 +4,16 @@ import type { ScanRecord } from "@/types/ScanRecord";
 
 type SubmitData = Omit<ScanRecord, 'id' | 'status' | 'latitude' | 'longitude'>;
 
-const Scanner = ({ onSubmit = (_: SubmitData) => {} }: { onSubmit?: (data: SubmitData) => void }) => {
+const Scanner = ({
+  onSubmit = (_: SubmitData) => {},
+  teamRequired = true,
+}: {
+  onSubmit?: (data: SubmitData) => void;
+  teamRequired?: boolean;
+}) => {
   return (
     <Card>
-      <Scan onSubmit={onSubmit} />
+      <Scan onSubmit={onSubmit} teamRequired={teamRequired} />
     </Card>
   );
 }

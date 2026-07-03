@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Switch, Typography } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { beep as beepNow } from "@/helpers/audioHelper";
 import { validateBelgianNationalNumber } from "@/helpers/belgian-validator";
 import "@/assets/css/scan.css";
@@ -37,8 +35,10 @@ type SubmitData = Omit<ScanRecord, 'id' | 'status' | 'latitude' | 'longitude'>;
 
 export default function Scan({
   onSubmit = (_: SubmitData) => {},
+  teamRequired = true,
 }: {
   onSubmit?: (data: SubmitData) => void;
+  teamRequired?: boolean;
 }) {
   const viewContainerRef = useRef<HTMLDivElement>(null);
   const [teamSelectOpen, setTeamSelectOpen] = useState(false);
@@ -48,8 +48,11 @@ export default function Scan({
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   const [niss, setNiss] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [teamRequired, setTeamRequired] = useState(true);
-  const teamRequiredRef = useRef(true);
+  // Ref zodat de Scandit didScan-listener (closure) altijd de actuele waarde ziet
+  const teamRequiredRef = useRef(teamRequired);
+  useEffect(() => {
+    teamRequiredRef.current = teamRequired;
+  }, [teamRequired]);
 
   const contextRef = useRef<DataCaptureContext | null>(null);
   const cameraRef = useRef<Camera | null>(null);
@@ -193,6 +196,7 @@ export default function Scan({
     if (!resultOpen) return null;
     return (
       <div className="resultModal">
+        {invalidMessage && <div className="invalid-message">{invalidMessage}</div>}
         {selectedTeam && (
           <div className="team-badge">
             <span className="team-badge__num">{selectedTeam.key}</span>
@@ -226,25 +230,6 @@ export default function Scan({
           className="scanCanvas"
           style={{ width: 320, height: 430, position: "relative" }}
         />
-        <Accordion disableGutters elevation={0} sx={{ background: 'transparent' }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="body2" color="text.secondary">Opties</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={teamRequired}
-                  onChange={(e) => {
-                    teamRequiredRef.current = e.target.checked;
-                    setTeamRequired(e.target.checked);
-                  }}
-                />
-              }
-              label="Ploeg selecteren"
-            />
-          </AccordionDetails>
-        </Accordion>
         <form className="manual-entry" onSubmit={handleManualSubmit}>
           <input
             className="manual-input"

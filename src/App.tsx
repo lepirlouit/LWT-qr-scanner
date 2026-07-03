@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { AppBar, Box, Card, CardHeader, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, IconButton, Menu, MenuItem, Switch, Toolbar, Typography } from '@mui/material'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import InstallPrompt from './components/InstallPrompt'
 import LastScans from './components/LastScans'
 import Scanner from './components/Scanner'
 import type { ScanRecord } from './types/ScanRecord'
@@ -25,6 +27,8 @@ const getGeolocation = (): Promise<GeolocationPosition> =>
 
 function App() {
   const [scans, setScans] = useState<ScanRecord[]>(loadScans);
+  const [teamRequired, setTeamRequired] = useState(true);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(scans.filter(s => s.status !== 'success')));
@@ -101,6 +105,38 @@ function App() {
           <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
             LWT Scanner
           </Typography>
+          <IconButton
+            color="inherit"
+            edge="end"
+            aria-label="opties"
+            onClick={(e) => setMenuAnchor(e.currentTarget)}
+          >
+            <MoreVertIcon />
+          </IconButton>
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={() => setMenuAnchor(null)}
+          >
+            <MenuItem onClick={() => setTeamRequired(v => !v)}>
+              <Switch
+                checked={teamRequired}
+                size="small"
+                edge="start"
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setTeamRequired(e.target.checked)}
+              />
+              Ploeg selecteren
+            </MenuItem>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ px: 2, pb: 1, maxWidth: 260 }}
+            >
+              Opgelet: schakel dit uit bij de tweede scanning op het clubkampioenschap.
+            </Typography>
+          </Menu>
         </Toolbar>
       </AppBar>
 
@@ -125,14 +161,12 @@ function App() {
             gap: 2,
           }}
         >
-          <Card>
-            <CardHeader title="LWT Scanner" />
-          </Card>
-
-          <Scanner onSubmit={handleScanSubmit} />
+          <Scanner onSubmit={handleScanSubmit} teamRequired={teamRequired} />
           <LastScans scans={scans} onRetry={handleRetry} />
         </Box>
       </Box>
+
+      <InstallPrompt />
     </Box>
   )
 }
