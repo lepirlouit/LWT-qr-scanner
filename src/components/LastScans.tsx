@@ -15,7 +15,7 @@ const statusIcon = (status: ScanRecord['status']) => {
 const LastScans = ({ scans = [], onRetry }: LastScansProps) => {
   return (
     <Card>
-      <CardHeader title="Last Scans" />
+      <CardHeader title="Laatste scans" />
       <List dense>
         {scans.map((scan) => (
           <ListItem
@@ -23,7 +23,7 @@ const LastScans = ({ scans = [], onRetry }: LastScansProps) => {
             secondaryAction={
               scan.status === 'failed' ? (
                 <Button size="small" color="error" onClick={() => onRetry(scan.id)}>
-                  Retry
+                  Opnieuw
                 </Button>
               ) : null
             }
