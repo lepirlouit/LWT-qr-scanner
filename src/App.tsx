@@ -19,10 +19,15 @@ const loadScans = (): ScanRecord[] => {
   }
 };
 const MAX_RETRIES = 3;
+const FETCH_TIMEOUT = 15000;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const getGeolocation = (): Promise<GeolocationPosition> =>
   new Promise((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 60000,
+    })
   );
 
 function App() {
@@ -60,6 +65,7 @@ function App() {
             latitude,
             longitude,
           }),
+          signal: AbortSignal.timeout(FETCH_TIMEOUT),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         updateScan(record.id, { status: 'success' });
