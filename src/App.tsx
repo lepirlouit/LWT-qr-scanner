@@ -4,8 +4,10 @@ import { AppBar, Box, IconButton, Menu, MenuItem, Switch, Toolbar, Typography } 
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import InstallPrompt from './components/InstallPrompt'
 import LastScans from './components/LastScans'
+import LocationStatus from './components/LocationStatus'
 import Scanner from './components/Scanner'
 import type { ScanRecord } from './types/ScanRecord'
+import { getGeolocation } from './helpers/geolocation'
 
 const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
 const STORAGE_KEY = 'lwt-scans';
@@ -21,14 +23,6 @@ const loadScans = (): ScanRecord[] => {
 const MAX_RETRIES = 3;
 const FETCH_TIMEOUT = 15000;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const getGeolocation = (): Promise<GeolocationPosition> =>
-  new Promise((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 60000,
-    })
-  );
 
 function App() {
   const [scans, setScans] = useState<ScanRecord[]>(loadScans);
@@ -159,6 +153,7 @@ function App() {
         }}
       >
         <Toolbar />
+        <LocationStatus />
         <Box
           sx={{
             width: '100%',
