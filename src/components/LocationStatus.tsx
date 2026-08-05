@@ -41,15 +41,13 @@ const LocationStatus = () => {
       severity="warning"
       sx={{ m: 2 }}
       action={
-        state === 'prompt' ? (
-          <Button color="inherit" size="small" onClick={requestLocation}>
-            Locatie toestaan
-          </Button>
-        ) : null
+        <Button color="inherit" size="small" onClick={requestLocation}>
+          {state === 'denied' ? 'Opnieuw proberen' : 'Locatie toestaan'}
+        </Button>
       }
     >
       {state === 'denied'
-        ? 'Locatie is geblokkeerd. Sta locatie toe in de browserinstellingen om scans mét locatie te versturen.'
+        ? 'Locatie is geblokkeerd. Sta locatie toe in de browserinstellingen en klik daarna op "Opnieuw proberen".'
         : 'Locatie is niet toegestaan. Scans worden zonder locatie verstuurd.'}
     </Alert>
   );
