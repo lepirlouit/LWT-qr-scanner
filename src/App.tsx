@@ -11,6 +11,16 @@ import { getGeolocation } from './helpers/geolocation'
 
 const SCANNING_API = "https://leeuwsewielertoeristen.be/scanner-api/public/api/scannings";
 const STORAGE_KEY = 'lwt-scans';
+const SCANDIT_DEVICE_ID_KEY = 'scandit-device-id';
+
+// Set by the Scandit SDK once the data capture context has been initialised
+const getDeviceId = (): string | null => {
+  try {
+    return localStorage.getItem(SCANDIT_DEVICE_ID_KEY);
+  } catch {
+    return null;
+  }
+};
 
 const loadScans = (): ScanRecord[] => {
   try {
@@ -58,6 +68,7 @@ function App() {
             moment: record.moment,
             latitude,
             longitude,
+            scanditDeviceId: getDeviceId(),
           }),
           signal: AbortSignal.timeout(FETCH_TIMEOUT),
         });
