@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, IconButton, Snackbar } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import IosShareIcon from '@mui/icons-material/IosShare';
+import OpenInBrowserIcon from '@mui/icons-material/OpenInBrowser';
 
 const DISMISSED_KEY = 'lwt-install-dismissed';
 
@@ -17,12 +18,28 @@ const isStandalone = () =>
 
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
+// Only Chrome gets a Google-signed WebAPK; other Android browsers build their own APK,
+// which Play Protect blocks as "ontwikkeld voor een oudere versie van Android".
+const isAndroidNonChrome = () =>
+  /android/i.test(navigator.userAgent) &&
+  (/SamsungBrowser|EdgA|OPR|OPT\/|YaBrowser|MiuiBrowser|HuaweiBrowser|HeyTapBrowser|Firefox/i.test(navigator.userAgent) ||
+    'brave' in navigator);
+
+const chromeIntentUrl = () =>
+  `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+
 function InstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
+  const [showChromeHint, setShowChromeHint] = useState(false);
 
   useEffect(() => {
     if (isStandalone() || localStorage.getItem(DISMISSED_KEY)) return;
+
+    if (isAndroidNonChrome()) {
+      setShowChromeHint(true);
+      return;
+    }
 
     const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -48,6 +65,7 @@ function InstallPrompt() {
     localStorage.setItem(DISMISSED_KEY, '1');
     setInstallEvent(null);
     setShowIosHint(false);
+    setShowChromeHint(false);
   };
 
   const install = async () => {
@@ -60,7 +78,7 @@ function InstallPrompt() {
 
   return (
     <Snackbar
-      open={installEvent !== null || showIosHint}
+      open={installEvent !== null || showIosHint || showChromeHint}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
       <Alert
@@ -68,6 +86,16 @@ function InstallPrompt() {
         icon={false}
         action={
           <>
+            {showChromeHint && (
+              <Button
+                color="inherit"
+                size="small"
+                href={chromeIntentUrl()}
+                startIcon={<OpenInBrowserIcon />}
+              >
+                Openen in Chrome
+              </Button>
+            )}
             {installEvent !== null && (
               <Button color="inherit" size="small" onClick={install}>
                 Installeren
@@ -79,7 +107,9 @@ function InstallPrompt() {
           </>
         }
       >
-        {installEvent !== null ? (
+        {showChromeHint ? (
+          'Open deze pagina in Google Chrome om LWT Scanner veilig als app te installeren.'
+        ) : installEvent !== null ? (
           'Installeer LWT Scanner als app op je toestel.'
         ) : (
           <>
