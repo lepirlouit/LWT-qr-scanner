@@ -9,6 +9,7 @@ npm run dev      # Start Vite dev server (also copies Scandit engine to public/s
 npm run build    # Type-check + build (tsc -b && vite build)
 npm run lint     # ESLint
 npm run preview  # Preview production build
+npm run deploy   # Build + rsync dist/ to www/scanning/ on ssh.leeuwsewielertoeristen.be
 ```
 
 There are no tests.
